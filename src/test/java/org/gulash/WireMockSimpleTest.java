@@ -1,5 +1,6 @@
-package org.example;
+package org.gulash;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,15 +9,24 @@ import org.junit.jupiter.api.DisplayName;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@WireMockTest(httpPort = 8080)
-public class WireMockExampleTest {
+// @WireMockTest - это JUnit 5-расширение WireMock, которое автоматически
+//  поднимает и останавливает WireMock-сервер вокруг тестов.
+@WireMockTest(
+    //httpPort = 8080 // Фиксирует, на каком порту WireMock будет слушать HTTP-запросы
+    //,httpsEnabled = true // Включает HTTPS-режим.
+    //,httpsPort = 8443 // Задаёт порт для HTTPS. Обычно используется вместе с httpsEnabled = true.
+)
+public class WireMockSimpleTest {
 
     private UserClient userClient;
 
     @BeforeEach
-    void setUp() {
-        // WireMock автоматически стартует на порту 8080 благодаря аннотации @WireMockTest
-        userClient = new UserClient("http://localhost:8080");
+    void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+        // WireMock стартует на порту случайном порту, если не используем @WireMockTest(httpPort = 8080)
+        String baseUrl = wmRuntimeInfo.getHttpBaseUrl();
+        userClient = new UserClient(baseUrl);
+        // WireMock стартует на порту 8080 благодаря аннотации @WireMockTest(httpPort = 8080)
+        //userClient = new UserClient("http://localhost:8080");
     }
 
     @Test

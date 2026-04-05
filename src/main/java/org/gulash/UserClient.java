@@ -1,4 +1,4 @@
-package org.example;
+package org.gulash;
 
 import java.net.URI;
 import java.net.http.HttpClient;
