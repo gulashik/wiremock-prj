@@ -10,51 +10,59 @@ import org.junit.jupiter.api.DisplayName;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-// @WireMockTest - это JUnit 5-расширение WireMock, которое автоматически
-//  поднимает и останавливает WireMock-сервер вокруг тестов.
-// Примеры обновлены для использования Jackson.
-@WireMockTest(
-    //httpPort = 8080 // Фиксирует, на каком порту WireMock будет слушать HTTP-запросы
-    //,httpsEnabled = true // Включает HTTPS-режим.
-    //,httpsPort = 8443 // Задаёт порт для HTTPS. Обычно используется вместе с httpsEnabled = true.
-)
+/**
+ * Тестовый класс, демонстрирующий базовое использование WireMock с аннотацией @WireMockTest.
+ * Это самый простой способ интегрировать WireMock в JUnit 5 тесты.
+ * Расширение автоматически управляет жизненным циклом сервера (start/stop).
+ */
+@WireMockTest
 public class WireMockSimpleTest {
 
+    /** Наш HTTP-клиент, который мы будем тестировать. */
     private UserClient userClient;
+    /** Экземпляр Jackson ObjectMapper для подготовки JSON-данных в тестах. */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Метод настройки перед каждым тестом.
+     * JUnit 5 внедряет WireMockRuntimeInfo, из которого можно получить динамический URL сервера.
+     * @param wmRuntimeInfo Информация о запущенном экземпляре WireMock
+     */
     @BeforeEach
     void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
-        // WireMock стартует на порту случайном порту, если не используем @WireMockTest(httpPort = 8080)
+        // Получаем базовый URL (например, http://localhost:54321), который WireMock выделил автоматически.
         String baseUrl = wmRuntimeInfo.getHttpBaseUrl();
         userClient = new UserClient(baseUrl);
-        // WireMock стартует на порту 8080 благодаря аннотации @WireMockTest(httpPort = 8080)
-        //userClient = new UserClient("http://localhost:8080");
     }
 
+    /**
+     * Демонстрация создания заглушки (Stubbing) для GET-запроса.
+     */
     @Test
     @DisplayName("Базовый стаб для GET запроса с использованием Jackson")
     void testGetUserStub() throws Exception {
-        // Шаги теста:
-        // 1. Подготовка: Создаем ожидаемого пользователя и его JSON.
+        // 1. Подготовка: Создаем объект пользователя и преобразуем его в JSON-строку.
         User expectedUser = new User(1, "John Doe");
         String jsonResponse = objectMapper.writeValueAsString(expectedUser);
 
         // 2. Настройка WireMock (Stubbing):
-        //    Сообщаем WireMock: "Если придет GET на /users/1, верни JSON ответ со статусом 200".
+        // stubFor - статический метод для регистрации поведения сервера.
+        // get(urlEqualTo(...)) - матчер для входящего запроса.
+        // aResponse() - описание того, что сервер должен вернуть.
         stubFor(get(urlEqualTo("/users/1"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody(jsonResponse)));
 
-        // 3. Действие: Вызываем метод клиента.
+        // 3. Действие: Вызываем метод клиента, который внутри делает реальный HTTP-запрос.
         User response = userClient.getUserById("1");
 
-        // 4. Проверка: Убеждаемся, что получили те данные, которые настроили в WireMock.
+        // 4. Проверка (Assertions): Убеждаемся, что клиент корректно обработал ответ.
         assertEquals(expectedUser, response);
 
-        // 5. Верификация: Проверяем, что запрос действительно был зафиксирован WireMock-ом.
+        // 5. Верификация (Verification): Проверяем, что запрос действительно дошел до WireMock.
+        // Это важно, чтобы убедиться, что клиент не использует кэш или не обращается не туда.
         verify(getRequestedFor(urlEqualTo("/users/1")));
     }
 
