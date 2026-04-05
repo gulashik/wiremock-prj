@@ -1,5 +1,6 @@
 package org.gulash;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class WireMockExtendWithTest {
 
     private UserClient userClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
@@ -30,30 +32,50 @@ public class WireMockExtendWithTest {
     }
 
     @Test
-    @DisplayName("Проверка GET через @ExtendWith и внедрение WireMockRuntimeInfo")
+    @DisplayName("Проверка GET через @ExtendWith и внедрение WireMockRuntimeInfo с использованием Jackson")
     void testGetWithRuntimeInfo() throws IOException, InterruptedException {
+        // Шаги теста:
+        // 1. Подготовка: Создаем ожидаемого пользователя и JSON.
+        User expectedUser = new User(3, "Charlie");
+        String jsonResponse = objectMapper.writeValueAsString(expectedUser);
+
+        // 2. Настройка WireMock:
+        //    WireMock узнает, что нужно вернуть, благодаря stubFor. 
+        //    Здесь мы сопоставляем GET запрос на "/users/3".
         stubFor(get(urlEqualTo("/users/3"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
-                        .withBody("{\"id\": 3, \"name\": \"Charlie\"}")));
+                        .withBody(jsonResponse)));
 
-        String response = userClient.getUserById("3");
+        // 3. Действие: Выполняем запрос через клиента.
+        User response = userClient.getUserById("3");
 
-        assertEquals("{\"id\": 3, \"name\": \"Charlie\"}", response);
+        // 4. Проверка: Результат должен соответствовать ожиданиям.
+        assertEquals(expectedUser, response);
+
+        // 5. Верификация: Убеждаемся, что WireMock зафиксировал вызов.
         verify(getRequestedFor(urlEqualTo("/users/3")));
     }
 
     @Test
-    @DisplayName("Использование статических методов WireMock")
+    @DisplayName("Использование Jackson для POST запроса")
     void testStaticMethods() throws IOException, InterruptedException {
-        // При использовании @ExtendWith, статические методы WireMock по умолчанию привязаны к локальному серверу
+        // Шаги теста:
+        // 1. Настройка: Программно задаем поведение WireMock для POST запроса.
         stubFor(post(urlEqualTo("/users"))
                 .willReturn(aResponse().withStatus(201)));
 
-        int status = userClient.createUser("{\"name\": \"New User\"}");
+        // 2. Действие: Отправляем данные.
+        User newUser = new User(10, "New User");
+        int status = userClient.createUser(newUser);
 
+        // 3. Проверка: Статус ответа должен быть 201.
         assertEquals(201, status);
-        verify(postRequestedFor(urlEqualTo("/users")));
+
+        // 4. Верификация: Проверяем, что тело запроса, которое получил WireMock,
+        //    соответствует JSON представлению нашего объекта.
+        verify(postRequestedFor(urlEqualTo("/users"))
+                .withRequestBody(equalToJson(objectMapper.writeValueAsString(newUser))));
     }
 }

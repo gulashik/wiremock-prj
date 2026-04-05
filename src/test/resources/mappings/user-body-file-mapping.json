@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/users/200"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "user-200.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

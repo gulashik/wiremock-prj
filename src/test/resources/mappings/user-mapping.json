@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/users/100"
+  },
+  "response": {
+    "status": 200,
+    "body": "{\"id\": 100, \"name\": \"Mapping User\"}",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
