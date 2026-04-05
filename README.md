@@ -59,6 +59,48 @@ verify(postRequestedFor(urlEqualTo("/users"))
 
 ---
 
+## Полезные матчеры
+  
+WireMock позволяет гибко настраивать условия срабатывания стабов (Stubbing) и проверки запросов (Verification):
+  
+- **URL матчеры:**
+    - `get(urlEqualTo("/weather?city=Helsinki"))` — точное совпадение URL+params.
+    - `get(urlPathEqualTo("/weather"))` — только путь (игнорирует query параметры).
+    - `get(urlMatching("/weather/.*"))` — совпадение по регулярному выражению.
+- **Header матчеры:**
+    - `.withHeader("Authorization", matching("Bearer .*"))` — проверка по регулярному выражению.
+    - `.withHeader("Content-Type", containing("json"))` — проверка на наличие подстроки.
+- **Body матчеры:**
+    - `.withRequestBody(equalToJson("{\"key\":\"value\"}"))` — сравнение JSON объектов (игнорирует порядок полей и пробелы).
+    - `.withRequestBody(matchingJsonPath("$.name"))` — проверка, что поле существует.
+    - `.withRequestBody(matchingJsonPath("$.age", equalTo("25")))` — проверка значения поля через JsonPath.
+- **Query параметры:**
+    - `.withQueryParam("limit", equalTo("10"))` — точное совпадение.
+    - `.withQueryParam("sort", matching("asc|desc"))` — совпадение по регулярному выражению.
+
+---
+
+## Verify — проверка вызовов
+
+Верификация используется для подтверждения того, что клиент действительно совершил ожидаемые вызовы к API.
+
+```java
+// Проверка, что был сделан хотя бы один запрос
+verify(getRequestedFor(urlEqualTo("/users/1")));
+
+// Проверка точного количества вызовов
+verify(exactly(2), postRequestedFor(urlEqualTo("/users")));
+
+// Проверка, что вызовов не было
+verify(exactly(0), deleteRequestedFor(urlMatching("/admin/.*")));
+
+// Проверка наличия специфичного заголовка в отправленном запросе
+verify(postRequestedFor(urlEqualTo("/login"))
+    .withHeader("X-Auth-Token", matching("^[A-Z0-9]+$")));
+```
+
+---
+
 ## Полезные советы (Best Practices)
 
 *   **Используйте динамические порты:** В реальных CI/CD системах лучше использовать `@WireMockTest`, который по умолчанию выбирает свободный порт, чтобы избежать конфликтов.
