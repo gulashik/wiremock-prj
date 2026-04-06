@@ -17,6 +17,7 @@
     *   `WireMockSimpleTest.java`: Базовое использование аннотации `@WireMockTest`. **Рекомендуется для начала.**
     *   `WireMockAdvancedTest.java`: Примеры различных матчеров (URL, Headers, Body, Query) и верификации вызовов.
     *   `WireMockExtensionTest.java`: Программная настройка через `@RegisterExtension` (удобно для динамических портов).
+    *   `WireMockServerTest.java`: Прямое управление сервером через `WireMockServer`. Полезно для сложных сценариев или других тестовых фреймворков.
     *   `WireMockMappingTest.java`: Загрузка стабов из внешних JSON-файлов (декларативный подход).
 *   `src/test/resources/wiremock/`:
     *   `mappings/`: JSON-описания стабов.
@@ -67,6 +68,18 @@ verify(postRequestedFor(urlEqualTo("/users"))
 ---
 
 ## Продвинутые возможности
+
+### Ручное управление сервером (WireMockServer)
+Если стандартные аннотации JUnit 5 не подходят, можно использовать `WireMockServer` напрямую. Это дает полный контроль над запуском и остановкой.
+
+```java
+WireMockServer wm = new WireMockServer(options().dynamicPort());
+wm.start();
+// Настройка и использование
+wm.stubFor(get("/api").willReturn(ok()));
+// ...
+wm.stop();
+```
 
 ### Матчеры (Matchers)
 WireMock позволяет гибко описывать условия срабатывания стабов:

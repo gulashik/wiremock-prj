@@ -18,6 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @WireMockTest
 public class WireMockAdvancedTest {
 
+    /**
+     * ПРИМЕЧАНИЕ: Использование 'new WireMockServer(0)' все еще актуально, 
+     * если вы не используете JUnit 5 расширения или нуждаетесь в полном контроле 
+     * над жизненным циклом сервера. См. WireMockServerTest.java.
+     */
+
     /** Наш HTTP-клиент для тестирования. */
     private UserClient userClient;
 
