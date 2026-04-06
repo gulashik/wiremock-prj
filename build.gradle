@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'org.example'
@@ -10,19 +12,15 @@ repositories {
 }
 
 dependencies {
-    // JUnit 5
-    testImplementation platform('org.junit:junit-bom:5.10.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // WireMock
+    testImplementation 'org.springframework.cloud:spring-cloud-contract-wiremock:4.1.2'
+
+    // Explicitly add JUnit Platform Launcher (required by some Gradle/JUnit versions)
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // WireMock (Stand-alone or as a library)
-    testImplementation 'org.wiremock:wiremock:3.3.1'
-
-    // Jackson
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
-    
-    // Logger for better visibility
-    implementation 'org.slf4j:slf4j-simple:2.0.9'
 }
 
 test {

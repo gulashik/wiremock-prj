@@ -70,16 +70,55 @@ verify(postRequestedFor(urlEqualTo("/users"))
 ## Продвинутые возможности
 
 ### Ручное управление сервером (WireMockServer)
-Если стандартные аннотации JUnit 5 не подходят, можно использовать `WireMockServer` напрямую. Это дает полный контроль над запуском и остановкой.
+...
+```
+
+---
+
+## Использование со Spring Boot
+
+При использовании Spring Boot рекомендуется использовать библиотеку `spring-cloud-contract-wiremock`, которая предоставляет удобные аннотации для интеграции.
+
+### 1. Зависимости (Gradle)
+```gradle
+dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.cloud:spring-cloud-contract-wiremock:4.1.2'
+}
+```
+
+### 2. Автоматическая настройка (@AutoConfigureWireMock)
+Аннотация `@AutoConfigureWireMock` запускает WireMock как часть контекста Spring. По умолчанию она ищет файлы маппингов в `src/test/resources/mappings`.
 
 ```java
-WireMockServer wm = new WireMockServer(options().dynamicPort());
-wm.start();
-// Настройка и использование
-wm.stubFor(get("/api").willReturn(ok()));
-// ...
-wm.stop();
+@SpringBootTest(properties = {
+    "user-service.url=http://localhost:${wiremock.server.port}"
+})
+@AutoConfigureWireMock(port = 0) // Случайный свободный порт
+public class MySpringTest {
+    // WireMock настроен и доступен через статические методы stubFor(...)
+}
 ```
+
+### 3. Динамические порты
+Порт, выбранный WireMock, автоматически записывается в свойство `${wiremock.server.port}`. Его можно использовать в аннотации `@SpringBootTest` или внедрять через `@DynamicPropertySource`:
+
+```java
+@DynamicPropertySource
+static void configureProperties(DynamicPropertyRegistry registry) {
+    registry.add("external.api.url", () -> "http://localhost:${wiremock.server.port}");
+}
+```
+
+### 4. Внедрение WireMockServer
+Вы можете внедрить экземпляр `WireMockServer` прямо в тест, если вам нужен программный доступ к управлению сервером.
+
+```java
+@Autowired
+private WireMockServer wireMockServer;
+```
+
+---
 
 ### Матчеры (Matchers)
 WireMock позволяет гибко описывать условия срабатывания стабов:
